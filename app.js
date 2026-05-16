@@ -94,23 +94,26 @@ function renderMembers() {
 
   grid.innerHTML = [1, 2, 3, 4].map((slot) => {
     const member = getMemberBySlot(slot);
+    // 🌟 [핵심 로직] 현재 루프를 도는 카드(slot)가 내가 선택한 멤버(state.activeSlot)인지 판별합니다.
+    const isMe = state.activeSlot === slot;
+
     return `
-      <div class="member-card" style="border-left: 5px solid ${member.color}">
+      <div class="member-card" style="border-left: 5px solid ${member.color}; ${!isMe ? 'opacity: 0.85;' : ''}">
         <div class="member-header">
           <div class="member-title">
             <div class="avatar"><img src="${member.avatar_url || makeAvatar(member)}" alt="" /></div>
             <div class="field" style="margin-left:4px;">
-              <input type="text" data-name-slot="${slot}" value="${sanitize(member.name)}" placeholder="이름 변경" />
+              <input type="text" data-name-slot="${slot}" value="${sanitize(member.name)}" placeholder="이름 변경" ${!isMe ? 'disabled style="background:#f1f5f9; color:#94a3b8;"' : ''} />
             </div>
           </div>
           <div style="display:flex; align-items:center; gap:6px;">
-            <input type="color" data-color-slot="${slot}" value="${member.color}" style="width:28px; height:24px; border:none; cursor:pointer; background:none; padding:0;" />
-            <button class="secondary active-select" data-active-slot="${slot}" style="padding:4px 8px; font-size:11px; background:${state.activeSlot === slot ? member.color : '#edf2ff'}; color:${state.activeSlot === slot ? '#fff' : '#334155'}">
-              ${state.activeSlot === slot ? '선택됨' : '선택'}
+            <input type="color" data-color-slot="${slot}" value="${member.color}" style="width:28px; height:24px; border:none; cursor:pointer; background:none; padding:0;" ${!isMe ? 'disabled style="pointer-events:none; opacity:0.5;"' : ''} />
+            <button class="secondary active-select" data-active-slot="${slot}" style="padding:4px 8px; font-size:11px; background:${isMe ? member.color : '#edf2ff'}; color:${isMe ? '#fff' : '#334155'}">
+              ${isMe ? '선택됨' : '선택'}
             </button>
           </div>
         </div>
-        <div class="file-upload-field">
+        <div class="file-upload-field" style="${isMe ? 'display:block;' : 'display:none;'}">
           <input type="file" accept="image/*" data-avatar-file-slot="${slot}" />
         </div>
       </div>`;
@@ -123,18 +126,18 @@ function renderMembers() {
     renderLegend();
   }));
 
-  document.querySelectorAll('[data-name-slot]').forEach(input => {
+  // 이벤트 바인딩은 활성화된 엘리먼트에만 정상적으로 적용됩니다.
+  document.querySelectorAll('[data-name-slot]:not([disabled])').forEach(input => {
     input.addEventListener('focus', () => { isEditingInput = true; });
     input.addEventListener('blur', async () => { isEditingInput = false; await handleAutoSave(Number(input.dataset.nameSlot)); });
     input.addEventListener('keydown', (e) => { if(e.key === 'Enter') input.blur(); });
   });
 
-  document.querySelectorAll('[data-color-slot]').forEach(input => {
+  document.querySelectorAll('[data-color-slot]:not([disabled])').forEach(input => {
     input.addEventListener('click', () => { isEditingInput = true; });
     input.addEventListener('change', async () => { isEditingInput = false; await handleAutoSave(Number(input.dataset.colorSlot)); });
   });
 
-  // 🌟 파일 업로드 로직 완전 재정비 및 자동 비동기 동기화 락 제어 확실하게 수정
   document.querySelectorAll('[data-avatar-file-slot]').forEach(input => input.addEventListener('change', async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -295,7 +298,6 @@ async function toggleHeartModal() {
   } catch (e) {}
 }
 
-// 🌟 [수정] 일정 저장하기 버튼을 누를 때만 제목 체크 알림창이 작동하도록 완벽 분리했습니다.
 async function saveSchedule() {
   try {
     const member = state.members.find(m => m.slot === state.activeSlot);
@@ -303,7 +305,6 @@ async function saveSchedule() {
     const title = qs('scheduleTitle').value.trim();
     const memo = qs('scheduleMemo').value.trim();
     
-    // 이제 오직 바쁜 일정을 새로 추가하여 [저장하기] 버튼을 누를 때만 이 알림창이 작동합니다.
     if(!title) { alert('바쁜 일정 제목을 입력하세요! (예: 약속, 알바 등)'); return; }
 
     const existing = state.events.find(item => item.date === state.scheduleDate && item.member_id === member.id);
