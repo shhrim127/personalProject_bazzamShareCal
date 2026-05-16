@@ -94,7 +94,6 @@ function renderMembers() {
 
   grid.innerHTML = [1, 2, 3, 4].map((slot) => {
     const member = getMemberBySlot(slot);
-    // 🌟 [핵심 로직] 현재 루프를 도는 카드(slot)가 내가 선택한 멤버(state.activeSlot)인지 판별합니다.
     const isMe = state.activeSlot === slot;
 
     return `
@@ -126,7 +125,6 @@ function renderMembers() {
     renderLegend();
   }));
 
-  // 이벤트 바인딩은 활성화된 엘리먼트에만 정상적으로 적용됩니다.
   document.querySelectorAll('[data-name-slot]:not([disabled])').forEach(input => {
     input.addEventListener('focus', () => { isEditingInput = true; });
     input.addEventListener('blur', async () => { isEditingInput = false; await handleAutoSave(Number(input.dataset.nameSlot)); });
@@ -219,12 +217,13 @@ function renderCalendar() {
     const cell = document.createElement('div');
     cell.className = `day ${muted ? 'muted' : ''} ${isToday ? 'today' : ''}`;
     
+    // 🌟 [변경] 달력 칸에 하트 대신 💩 이모지가 뜨도록 변경했습니다!
     cell.innerHTML = `
       <div class="date-num">${day}</div>
       <div class="indicator-row">
         ${dayAvailability.map(item => {
           const m = getMemberById(item.member_id);
-          return m ? `<span class="heart-dot" style="color:${m.color}">♥</span>` : '';
+          return m ? `<span class="heart-dot" style="text-shadow: 0 0 0 ${m.color}; filter: grayscale(100%) sepia(100%) saturate(500%) hue-rotate(-20deg);">💩</span>` : '';
         }).join('')}
         ${dayEvents.map(item => {
           const m = getMemberById(item.member_id);
@@ -266,12 +265,13 @@ function openDayModal(date) {
   qs('scheduleModal').classList.add('show');
 }
 
+// 🌟 [변경] 모달 창 내부의 버튼 텍스트도 똥 컨셉에 맞게 변경 완료!
 function updateHeartButtonUI(date, currentMember) {
   const hasHeart = state.availability.find(item => item.date === date && item.member_id === currentMember.id);
   const hBtn = qs('modalHeartBtn');
   if(!hBtn) return;
-  hBtn.textContent = hasHeart ? "♥ 이날 가능해! (취소하려면 터치)" : "♡ 나 이날 가능해! (하트 투표)";
-  hBtn.style.background = hasHeart ? "#ff6b81" : "#edf2ff";
+  hBtn.textContent = hasHeart ? "💩 나 이날 안돼! (똥 취소)" : "💩 나 이날 가능해! (똥 투표)";
+  hBtn.style.background = hasHeart ? "#a78bfa" : "#edf2ff";
   hBtn.style.color = hasHeart ? "#fff" : "#334155";
 }
 
