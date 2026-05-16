@@ -35,6 +35,22 @@ function formatDateKey(year, month, day) {
 }
 function monthTitle(year, month) { return `${year}년 ${month + 1}월`; }
 
+// 🌟 데이터 구조 안전 결합용 헬퍼 함수 (사진 데이터와 한줄소개를 한 컬럼에 나누어 저장)
+function parseAvatarData(rawString) {
+  if (!rawString) return { url: '', memo: '' };
+  if (rawString.startsWith('DATA__')) {
+    const parts = rawString.split('__MEMO__');
+    return {
+      url: parts[0].replace('DATA__', ''),
+      memo: parts[1] || ''
+    };
+  }
+  return { url: rawString, memo: '' };
+}
+function packAvatarData(url, memo) {
+  return `DATA__${url || ''}__MEMO__${memo || ''}`;
+}
+
 function getUrlState() {
   const params = new URLSearchParams(location.search);
   state.roomSlug = params.get('room');
@@ -47,11 +63,6 @@ function setUrlState(roomSlug, roomToken) {
   history.replaceState({}, '', url.toString());
   state.roomSlug = roomSlug;
   state.roomToken = roomToken;
-}
-
-function randomString(length = 16) {
-  const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
-  return Array.from(crypto.getRandomValues(new Uint8Array(length))).map((v) => chars[v % chars.length]).join("");
 }
 
 async function supabaseFetch(url, options = {}) {
@@ -95,14 +106,17 @@ function renderMembers() {
   grid.innerHTML = [1, 2, 3, 4].map((slot) => {
     const member = getMemberBySlot(slot);
     const isMe = state.activeSlot === slot;
+    
+    // 복합 데이터 분리 분석
+    const parsed = parseAvatarData(member.avatar_url);
 
     return `
-      <div class="member-card" style="border-left: 5px solid ${member.color}; ${!isMe ? 'opacity: 0.85;' : ''}">
+      <div class="member-card" style="border-left: 5px solid ${member.color}; ${!isMe ? 'opacity: 0.9;' : ''}">
         <div class="member-header">
           <div class="member-title">
-            <div class="avatar"><img src="${member.avatar_url || makeAvatar(member)}" alt="" /></div>
+            <div class="avatar"><img src="${parsed.url || makeAvatar(member)}" alt="" /></div>
             <div class="field" style="margin-left:4px;">
-              <input type="text" data-name-slot="${slot}" value="${sanitize(member.name)}" placeholder="이름 변경" ${!isMe ? 'disabled style="background:#f1f5f9; color:#94a3b8;"' : ''} />
+              <input type="text" data-name-slot="${slot}" value="${sanitize(member.name)}" placeholder="이름 변경" ${!isMe ? 'disabled style="background:#f1f5f9; color:#94a3b8; border:none;"' : ''} />
             </div>
           </div>
           <div style="display:flex; align-items:center; gap:6px;">
@@ -112,7 +126,15 @@ function renderMembers() {
             </button>
           </div>
         </div>
-        <div class="file-upload-field" style="${isMe ? 'display:block;' : 'display:none;'}">
+        
+        <div style="margin-top: 6px; display: flex; flex-direction: column; gap: 4px;">
+          <input type="text" data-memo-slot="${slot}" value="${sanitize(parsed.memo)}" 
+            placeholder="${isMe ? '나의 고정 일정 입력 (예: 월~금 9-17시 학교수업)' : '등록된 고정 일정 없음'}" 
+            style="width:100%; padding:6px 8px; font-size:12px; border:1px solid #e2e8f0; border-radius:8px; background: ${isMe ? '#fff' : '#f8fafc'}; color: ${isMe ? '#1e293b' : '#64748b'};"
+            ${!isMe ? 'disabled style="border:none; padding-left:2px;"' : ''} />
+        </div>
+
+        <div class="file-upload-field" style="${isMe ? 'display:block; margin-top:6px;' : 'display:none;'}">
           <input type="file" accept="image/*" data-avatar-file-slot="${slot}" />
         </div>
       </div>`;
@@ -128,6 +150,13 @@ function renderMembers() {
   document.querySelectorAll('[data-name-slot]:not([disabled])').forEach(input => {
     input.addEventListener('focus', () => { isEditingInput = true; });
     input.addEventListener('blur', async () => { isEditingInput = false; await handleAutoSave(Number(input.dataset.nameSlot)); });
+    input.addEventListener('keydown', (e) => { if(e.key === 'Enter') input.blur(); });
+  });
+
+  // 🌟 한줄소개 입력창 포커스 아웃 혹은 엔터 칠 때 실시간 자동 저장 이벤트 바인딩
+  document.querySelectorAll('[data-memo-slot]:not([disabled])').forEach(input => {
+    input.addEventListener('focus', () => { isEditingInput = true; });
+    input.addEventListener('blur', async () => { isEditingInput = false; await handleAutoSave(Number(input.dataset.memoSlot)); });
     input.addEventListener('keydown', (e) => { if(e.key === 'Enter') input.blur(); });
   });
 
@@ -157,7 +186,10 @@ function renderMembers() {
         isEditingInput = false;
         
         const currentMember = getMemberBySlot(slot);
-        await upsertMember(slot, currentMember.name, currentMember.color, compressedDataUrl);
+        const parsed = parseAvatarData(currentMember.avatar_url);
+        
+        // 사진만 교체하고 한줄소개는 보존해서 팩킹 전송
+        await upsertMember(slot, currentMember.name, currentMember.color, packAvatarData(compressedDataUrl, parsed.memo));
         await loadRoomState();
       };
       img.src = reader.result;
@@ -169,10 +201,15 @@ function renderMembers() {
 async function handleAutoSave(slot) {
   const nameInput = document.querySelector(`[data-name-slot="${slot}"]`);
   const colorInput = document.querySelector(`[data-color-slot="${slot}"]`);
-  if(!nameInput || !colorInput) return;
+  const memoInput = document.querySelector(`[data-memo-slot="${slot}"]`);
+  if(!nameInput || !colorInput || !memoInput) return;
   
-  const currentAvatar = getMemberBySlot(slot).avatar_url;
-  await upsertMember(slot, nameInput.value.trim() || `멤버 ${slot}`, colorInput.value, currentAvatar);
+  const currentMember = getMemberBySlot(slot);
+  const parsed = parseAvatarData(currentMember.avatar_url);
+  
+  // 입력한 최신 한줄소개 값과 원래 사진 주소를 합쳐서 안전하게 업서트 진행
+  const packedData = packAvatarData(parsed.url, memoInput.value.trim());
+  await upsertMember(slot, nameInput.value.trim() || `멤버 ${slot}`, colorInput.value, packedData);
   await loadRoomState();
 }
 
@@ -217,7 +254,6 @@ function renderCalendar() {
     const cell = document.createElement('div');
     cell.className = `day ${muted ? 'muted' : ''} ${isToday ? 'today' : ''}`;
     
-    // 안전한 똥 서클 배지 구조 렌더링
     let availabilityHTML = '';
     dayAvailability.forEach(item => {
       const m = getMemberById(item.member_id);
