@@ -39,15 +39,15 @@
       
       <div class="modal-event-list" id="modalEventList"></div>
       
-      <button id="modalHeartBtn" style="width:100%; padding:10px; font-weight:bold; font-size:13px; border-radius:10px;"></button>
+      <button id="modalHeartBtn" style="width:100%; padding:10px; font-weight:bold; font-size:13px; border-radius:10px; border:none; cursor:pointer;"></button>
       
-      <div style="border-top: 1px dashed var(--border); padding-top: 8px; margin-top: 4px; display:flex; flex-direction:column; gap:6px;">
+      <div style="border-top: 1px dashed var(--border); padding-top: 8px; margin-top: 8px; display:flex; flex-direction:column; gap:6px;">
         <div style="font-size:11px; color:var(--text-muted); font-weight:bold;">이날 바빠용 일정 추가 (약속/알바 등)</div>
         <input type="text" id="scheduleTitle" placeholder="일정 제목을 입력하세요" />
         <textarea id="scheduleMemo" placeholder="상세 메모 (선택사항)"></textarea>
-        <div class="modal-footer-btns">
-          <button class="secondary" id="deleteScheduleBtn" style="background:#fee2e2; color:#ef4444;">삭제</button>
-          <button class="primary" id="saveScheduleBtn">일정 저장</button>
+        <div class="modal-footer-btns" style="display:flex; gap:6px; margin-top:4px;">
+          <button class="secondary" id="deleteScheduleBtn" style="flex:1; background:#fee2e2; color:#ef4444; border:none; padding:8px; border-radius:6px; cursor:pointer;">삭제</button>
+          <button class="primary" id="saveScheduleBtn" style="flex:2; border:none; padding:8px; border-radius:6px; cursor:pointer;">일정 저장</button>
         </div>
       </div>
     </div>

@@ -217,20 +217,28 @@ function renderCalendar() {
     const cell = document.createElement('div');
     cell.className = `day ${muted ? 'muted' : ''} ${isToday ? 'today' : ''}`;
     
-    // 🌟 [안전하고 확실한 똥 표현으로 변경]
-    // 이모지 뒤에 원형 배경(background)을 깔아서 멤버들의 고유 색상을 오류 없이 완벽하게 표현합니다!
+    // 💩 마크업 충돌을 방지하기 위해 가장 간결하고 표준적인 태그 구조로 안전화 처리를 진행했습니다.
+    let availabilityHTML = '';
+    dayAvailability.forEach(item => {
+      const m = getMemberById(item.member_id);
+      if(m) {
+        availabilityHTML += `<span class="heart-dot" style="display:inline-block; font-size:11px; margin-right:2px; background:${m.color}; border-radius:50%; padding:1px; line-height:1; box-shadow:0 1px 1px rgba(0,0,0,0.2);">💩</span>`;
+      }
+    });
+
+    let eventsHTML = '';
+    dayEvents.forEach(item => {
+      const m = getMemberById(item.member_id);
+      if(m) {
+        eventsHTML += `<span class="event-badge" style="display:inline-block; width:6px; height:6px; background:${m.color}; border-radius:50%; margin-right:2px;"></span>`;
+      }
+    });
+    
     cell.innerHTML = `
       <div class="date-num">${day}</div>
-      <div class="indicator-row" style="display:flex; flex-wrap:wrap; gap:3px;">
-        ${dayAvailability.map(item => {
-          const m = getMemberById(item.member_id);
-          if(!m) return '';
-          return `<span class="heart-dot" style="display:inline-flex; align-items:center; justify-content:center; width:16px; height:16px; border-radius:50%; background:${m.color}; font-size:10px; line-height:1; box-shadow:0 1px 2px rgba(0,0,0,0.15);">💩</span>`;
-        }).join('')}
-        ${dayEvents.map(item => {
-          const m = getMemberById(item.member_id);
-          return m ? `<span class="event-badge" style="background:${m.color}; width:6px; height:6px; border-radius:50%;"></span>` : '';
-        }).join('')}
+      <div class="indicator-row" style="display:block; margin-top:2px;">
+        <div class="avail-row" style="display:flex; flex-wrap:wrap; margin-bottom:2px;">${availabilityHTML}</div>
+        <div class="evt-row" style="display:flex; flex-wrap:wrap;">${eventsHTML}</div>
       </div>`;
       
     cell.addEventListener('click', () => openDayModal(dateKey));
