@@ -19,8 +19,7 @@ const state = {
 
 function qs(id) { return document.getElementById(id); }
 function sanitize(text) {
-  return String(text || '')
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+  return String(text || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
 }
 function makeAvatar(member) {
   const bg = encodeURIComponent((member.color || '#6d5dfc').replace('#', ''));
@@ -64,8 +63,7 @@ async function supabaseFetch(url, options = {}) {
     ...options.headers
   };
   const res = await fetch(url, { ...options, headers });
-  if (!res.ok) return null;
-  if (res.status === 204) return null;
+  if (!res.ok || res.status === 204) return null;
   const text = await res.text();
   return text ? JSON.parse(text) : null;
 }
@@ -93,25 +91,20 @@ function renderMembers() {
   qs('memberGrid').innerHTML = [1, 2, 3, 4].map((slot) => {
     const member = getMemberBySlot(slot);
     return `
-      <div class="member-card" style="border-top: 4px solid ${member.color}">
+      <div class="member-card" style="border-left: 5px solid ${member.color}">
         <div class="member-header">
           <div class="member-title">
             <div class="avatar"><img src="${member.avatar_url || makeAvatar(member)}" alt="" /></div>
-            <strong>${sanitize(member.name)}</strong>
+            <div class="field" style="margin-left:4px;">
+              <input type="text" data-name-slot="${slot}" value="${sanitize(member.name)}" placeholder="이름 변경" style="width:110px; padding:4px 6px;" />
+            </div>
           </div>
-          <button class="secondary active-select" data-active-slot="${slot}" style="padding:4px 10px; font-size:12px; background:${state.activeSlot === slot ? member.color : '#edf2ff'}; color:${state.activeSlot === slot ? '#fff' : '#334155'}">
-            ${state.activeSlot === slot ? '선택됨' : '선택'}
-          </button>
-        </div>
-        <div class="field">
-          <input type="text" data-name-slot="${slot}" value="${sanitize(member.name)}" placeholder="이름 변경" />
-        </div>
-        <div class="field" style="flex-direction:row; justify-content:space-between; align-items:center;">
-          <span>색상 선택</span>
-          <input type="color" data-color-slot="${slot}" value="${member.color}" style="width:40px; height:24px; border:none; cursor:pointer;" />
-        </div>
-        <div class="field">
-          <input type="file" accept="image/*" data-avatar-file-slot="${slot}" style="font-size:11px;" />
+          <div style="display:flex; align-items:center; gap:6px;">
+            <input type="color" data-color-slot="${slot}" value="${member.color}" style="width:28px; height:24px; border:none; cursor:pointer; background:none;" />
+            <button class="secondary active-select" data-active-slot="${slot}" style="padding:4px 8px; font-size:11px; background:${state.activeSlot === slot ? member.color : '#edf2ff'}; color:${state.activeSlot === slot ? '#fff' : '#334155'}">
+              ${state.activeSlot === slot ? '선택됨' : '선택'}
+            </button>
+          </div>
         </div>
       </div>`;
   }).join('');
@@ -133,20 +126,6 @@ function renderMembers() {
     input.addEventListener('click', () => { isEditingInput = true; });
     input.addEventListener('change', async () => { isEditingInput = false; await handleAutoSave(Number(input.dataset.colorSlot)); });
   });
-
-  document.querySelectorAll('[data-avatar-file-slot]').forEach(input => input.addEventListener('change', async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const slot = Number(input.dataset.avatarFileSlot);
-    isEditingInput = true;
-    const reader = new FileReader();
-    reader.onload = async () => {
-      isEditingInput = false;
-      await upsertMember(slot, getMemberBySlot(slot).name, getMemberBySlot(slot).color, reader.result);
-      await loadRoomState();
-    };
-    reader.readAsDataURL(file);
-  }));
 }
 
 async function handleAutoSave(slot) {
@@ -196,7 +175,6 @@ function renderCalendar() {
     const cell = document.createElement('div');
     cell.className = `day ${muted ? 'muted' : ''} ${isToday ? 'today' : ''}`;
     
-    // [수정] 모바일 최적화 배지 레이아웃 (글자 대신 동그라미 배지로 가독성 확보)
     cell.innerHTML = `
       <div class="date-num">${day}</div>
       <div class="indicator-row">
@@ -206,7 +184,7 @@ function renderCalendar() {
         }).join('')}
         ${dayEvents.map(item => {
           const m = getMemberById(item.member_id);
-          return m ? `<span class="event-badge" style="background:${m.color}"></span>` : '<span class="event-badge" style="background:#cbd5e1"></span>';
+          return m ? `<span class="event-badge" style="background:${m.color}"></span>` : '';
         }).join('')}
       </div>`;
       
@@ -215,7 +193,6 @@ function renderCalendar() {
   }
 }
 
-// [핵심 변경] 날짜를 누르면 팝업 모달이 뜨며, 기존 일정 목록 분리 확인 및 일정 등록/하트 토글 일괄 제어 가능
 function openDayModal(date) {
   state.scheduleDate = date;
   qs('modalDateTitle').textContent = `${date} 일정 상세`;
@@ -224,7 +201,7 @@ function openDayModal(date) {
   const listEl = qs('modalEventList');
   
   if(dayEvents.length === 0) {
-    listEl.innerHTML = `<div style="color:#64748b; font-size:13px; text-align:center; padding:10px;">등록된 일정이 없습니다.</div>`;
+    listEl.innerHTML = `<div style="color:#64748b; font-size:12px; text-align:center; padding:8px;">등록된 일정이 없습니다.</div>`;
   } else {
     listEl.innerHTML = dayEvents.map(item => {
       const m = getMemberById(item.member_id);
@@ -266,7 +243,7 @@ async function toggleHeartModal() {
       await supabaseFetch(`${API_BASE}/availability`, { method: 'POST', body: JSON.stringify({ room_id: state.roomId, date, member_id: member.id }) });
     }
     await loadRoomState();
-    openDayModal(date); // 모달 정보 갱신
+    openDayModal(date);
   } catch (e) {}
 }
 
