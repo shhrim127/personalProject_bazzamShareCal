@@ -107,17 +107,27 @@ function renderMembers() {
     const isMe = state.activeSlot === slot;
     const parsed = parseAvatarData(member.avatar_url);
 
+    // 🌟 [모바일 가독성 핵심 해결]
+    // 내 카드가 아닐 때는 disabled 인풋창 대신 선명한 일반 div 상자로 그려서 폰 브라우저의 강제 투명화(뿌옇게 변함)를 원천 차단합니다!
+    const memoHTML = isMe 
+      ? `<input type="text" data-memo-slot="${slot}" value="${sanitize(parsed.memo)}" 
+          placeholder="나의 고정 일정 입력 (예: 월~금 9-17시 학교수업)" 
+          style="width:100%; padding:6px 8px; font-size:12px; border:1px solid #e2e8f0; border-radius:8px; font-weight:500; background: #fff; color: #1e293b;" />`
+      : `<div style="width:100%; padding:6px 8px; font-size:12px; border:1px solid #e2e8f0; border-radius:8px; font-weight:600; background: #f1f5f9; color: #0f172a; min-height: 29px; word-break: break-all;">
+          ${sanitize(parsed.memo) || '<span style="color:#94a3b8; font-weight:400;">등록된 고정 일정 없음</span>'}
+         </div>`;
+
     return `
-      <div class="member-card" style="border-left: 5px solid ${member.color}; ${!isMe ? 'opacity: 0.98; background: #fafafa;' : 'background: #fff;'}">
+      <div class="member-card" style="border-left: 5px solid ${member.color}; background: ${isMe ? '#fff' : '#fafafa'}; opacity: 1;">
         <div class="member-header">
           <div class="member-title">
             <div class="avatar"><img src="${parsed.url || makeAvatar(member)}" alt="" /></div>
             <div class="field" style="margin-left:4px;">
-              <input type="text" data-name-slot="${slot}" value="${sanitize(member.name)}" placeholder="이름 변경" ${!isMe ? 'disabled style="background:#e2e8f0; color:#334155; border:none;"' : ''} />
+              <input type="text" data-name-slot="${slot}" value="${sanitize(member.name)}" placeholder="이름 변경" ${!isMe ? 'disabled style="background:#e2e8f0; color:#1e293b; border:none; font-weight:600;"' : ''} />
             </div>
           </div>
           <div style="display:flex; align-items:center; gap:6px;">
-            <input type="color" data-color-slot="${slot}" value="${member.color}" style="width:28px; height:24px; border:none; cursor:pointer; background:none; padding:0;" ${!isMe ? 'disabled style="pointer-events:none; opacity:0.3;"' : ''} />
+            <input type="color" data-color-slot="${slot}" value="${member.color}" style="width:28px; height:24px; border:none; cursor:pointer; background:none; padding:0;" ${!isMe ? 'disabled style="pointer-events:none; opacity:0.1;"' : ''} />
             <button class="secondary active-select" data-active-slot="${slot}" style="padding:4px 8px; font-size:11px; background:${isMe ? member.color : '#edf2ff'}; color:${isMe ? '#fff' : '#334155'}">
               ${isMe ? '선택됨' : '선택'}
             </button>
@@ -125,10 +135,7 @@ function renderMembers() {
         </div>
         
         <div style="margin-top: 6px; display: flex; flex-direction: column; gap: 4px;">
-          <input type="text" data-memo-slot="${slot}" value="${sanitize(parsed.memo)}" 
-            placeholder="${isMe ? '나의 고정 일정 입력 (예: 월~금 9-17시 학교수업)' : '등록된 고정 일정 없음'}" 
-            style="width:100%; padding:6px 8px; font-size:12px; border:1px solid #e2e8f0; border-radius:8px; font-weight:500; background: ${isMe ? '#fff' : '#f1f5f9'}; color: ${isMe ? '#1e293b' : '#334155'};"
-            ${!isMe ? 'disabled style="border:none; padding-left:8px;"' : ''} />
+          ${memoHTML}
         </div>
 
         <div class="file-upload-field" style="${isMe ? 'display:block; margin-top:6px;' : 'display:none;'}">
@@ -150,7 +157,8 @@ function renderMembers() {
     input.addEventListener('keydown', (e) => { if(e.key === 'Enter') input.blur(); });
   });
 
-  document.querySelectorAll('[data-memo-slot]:not([disabled])').forEach(input => {
+  // 활성화된 내 인풋창에만 이벤트 작동
+  document.querySelectorAll('[data-memo-slot]').forEach(input => {
     input.addEventListener('focus', () => { isEditingInput = true; });
     input.addEventListener('blur', async () => { isEditingInput = false; await handleAutoSave(Number(input.dataset.memoSlot)); });
     input.addEventListener('keydown', (e) => { if(e.key === 'Enter') input.blur(); });
@@ -197,13 +205,17 @@ async function handleAutoSave(slot) {
   const nameInput = document.querySelector(`[data-name-slot="${slot}"]`);
   const colorInput = document.querySelector(`[data-color-slot="${slot}"]`);
   const memoInput = document.querySelector(`[data-memo-slot="${slot}"]`);
-  if(!nameInput || !colorInput || !memoInput) return;
   
   const currentMember = getMemberBySlot(slot);
   const parsed = parseAvatarData(currentMember.avatar_url);
   
-  const packedData = packAvatarData(parsed.url, memoInput.value.trim());
-  await upsertMember(slot, nameInput.value.trim() || `멤버 ${slot}`, colorInput.value, packedData);
+  // 내 활성창일 때 입력값 추출, 아닐 때는 기존 값 유지
+  const finalMemo = memoInput ? memoInput.value.trim() : parsed.memo;
+  const finalName = nameInput ? nameInput.value.trim() : currentMember.name;
+  const finalColor = colorInput ? colorInput.value : currentMember.color;
+  
+  const packedData = packAvatarData(parsed.url, finalMemo);
+  await upsertMember(slot, finalName || `멤버 ${slot}`, finalColor, packedData);
   await loadRoomState();
 }
 
