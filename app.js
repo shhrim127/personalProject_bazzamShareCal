@@ -217,12 +217,12 @@ function renderCalendar() {
     const cell = document.createElement('div');
     cell.className = `day ${muted ? 'muted' : ''} ${isToday ? 'today' : ''}`;
     
-    // 💩 마크업 충돌을 방지하기 위해 가장 간결하고 표준적인 태그 구조로 안전화 처리를 진행했습니다.
+    // 안전한 똥 서클 배지 구조 렌더링
     let availabilityHTML = '';
     dayAvailability.forEach(item => {
       const m = getMemberById(item.member_id);
       if(m) {
-        availabilityHTML += `<span class="heart-dot" style="display:inline-block; font-size:11px; margin-right:2px; background:${m.color}; border-radius:50%; padding:1px; line-height:1; box-shadow:0 1px 1px rgba(0,0,0,0.2);">💩</span>`;
+        availabilityHTML += `<span class="poop-badge" style="display:inline-flex; align-items:center; justify-content:center; width:16px; height:16px; border-radius:50%; background:${m.color}; font-size:10px; line-height:1; margin-right:2px; box-shadow:0 1px 2px rgba(0,0,0,0.15);">💩</span>`;
       }
     });
 
@@ -237,8 +237,8 @@ function renderCalendar() {
     cell.innerHTML = `
       <div class="date-num">${day}</div>
       <div class="indicator-row" style="display:block; margin-top:2px;">
-        <div class="avail-row" style="display:flex; flex-wrap:wrap; margin-bottom:2px;">${availabilityHTML}</div>
-        <div class="evt-row" style="display:flex; flex-wrap:wrap;">${eventsHTML}</div>
+        <div style="display:flex; flex-wrap:wrap; margin-bottom:2px;">${availabilityHTML}</div>
+        <div style="display:flex; flex-wrap:wrap;">${eventsHTML}</div>
       </div>`;
       
     cell.addEventListener('click', () => openDayModal(dateKey));

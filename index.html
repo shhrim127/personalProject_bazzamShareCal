@@ -2,8 +2,8 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>바짬들의 💩 달력</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>우리들의 💩 달력</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -24,8 +24,11 @@
       <button class="secondary" id="prevMonth">이전달</button>
       <button class="secondary" id="todayBtn">오늘</button>
       <button class="secondary" id="nextMonth">다음달</button>
-      <button id="activeMemberBtn" style="color:white; font-size:12px; pointer-events:none;">나: 멤버 1</button>
     </div>
+  </div>
+
+  <div style="margin-bottom: 8px;">
+    <button id="activeMemberBtn" style="width:100%; color:white; pointer-events:none; font-weight:bold;">나: 멤버 1</button>
   </div>
 
   <div class="calendar" id="calendar"></div>
@@ -34,26 +37,33 @@
     <div class="modal-content">
       <div class="modal-header">
         <h3 id="modalDateTitle">일정 상세</h3>
-        <button class="secondary" id="closeModalBtn" style="padding:2px 8px; font-size:11px;">닫기</button>
+        <button id="closeModalBtn" style="background:none; border:none; font-size:22px; cursor:pointer; color:#64748b; padding:0 4px;">&times;</button>
       </div>
       
       <div class="modal-event-list" id="modalEventList"></div>
       
-      <button id="modalHeartBtn" style="width:100%; padding:10px; font-weight:bold; font-size:13px; border-radius:10px; border:none; cursor:pointer;"></button>
+      <button id="modalHeartBtn" style="width:100%; padding:12px; font-weight:bold; font-size:14px; border-radius:10px; border:none; cursor:pointer; margin:4px 0;"></button>
       
-      <div style="border-top: 1px dashed var(--border); padding-top: 8px; margin-top: 8px; display:flex; flex-direction:column; gap:6px;">
-        <div style="font-size:11px; color:var(--text-muted); font-weight:bold;">이날 바빠용 일정 추가 (약속/알바 등)</div>
-        <input type="text" id="scheduleTitle" placeholder="일정 제목을 입력하세요" />
-        <textarea id="scheduleMemo" placeholder="상세 메모 (선택사항)"></textarea>
-        <div class="modal-footer-btns" style="display:flex; gap:6px; margin-top:4px;">
-          <button class="secondary" id="deleteScheduleBtn" style="flex:1; background:#fee2e2; color:#ef4444; border:none; padding:8px; border-radius:6px; cursor:pointer;">삭제</button>
-          <button class="primary" id="saveScheduleBtn" style="flex:2; border:none; padding:8px; border-radius:6px; cursor:pointer;">일정 저장</button>
+      <hr style="border:none; border-top:1px solid #e2e8f0; margin:6px 0;">
+      
+      <div style="display:flex; flex-direction:column; gap:6px;">
+        <div style="font-size:11px; color:#64748b; font-weight:bold;">이날 바빠용 일정 추가 (약속/알바 등)</div>
+        <input type="text" id="scheduleTitle" placeholder="일정 제목을 입력하세요 (예: 알바, 약속)" maxlength="50" />
+        <textarea id="scheduleMemo" placeholder="상세 메모 (선택사항)" maxlength="200"></textarea>
+        <div class="modal-footer-btns" style="display:flex; gap:6px; margin-top:2px;">
+          <button id="deleteScheduleBtn" style="flex:1; background:#fee2e2; color:#ef4444; border:none; padding:10px; border-radius:8px; font-weight:bold; cursor:pointer;">삭제</button>
+          <button class="primary" id="saveScheduleBtn" style="flex:2; padding:10px; border-radius:8px; font-weight:bold; cursor:pointer;">일정 저장</button>
         </div>
       </div>
     </div>
   </div>
 
-  <script src="config.js"></script>
+  <script>
+    window.APP_CONFIG = {
+      SUPABASE_URL: "https://xqtjfbobcwuowjrcybxo.supabase.co", 
+      SUPABASE_ANON_KEY: "sb_publishable_d5Q0nRYspmvGsGue-j52oQ_rDYGMvjP"
+    };
+  </script>
   <script src="app.js"></script>
 </body>
 </html>
