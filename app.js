@@ -217,13 +217,15 @@ function renderCalendar() {
     const cell = document.createElement('div');
     cell.className = `day ${muted ? 'muted' : ''} ${isToday ? 'today' : ''}`;
     
-    // 🌟 [변경] 달력 칸에 하트 대신 💩 이모지가 뜨도록 변경했습니다!
+    // 🌟 [핵심 변경] 각 멤버의 고유 색상 코드를 추출해 💩 이모지를 강제 채색(염색)합니다!
     cell.innerHTML = `
       <div class="date-num">${day}</div>
       <div class="indicator-row">
         ${dayAvailability.map(item => {
           const m = getMemberById(item.member_id);
-          return m ? `<span class="heart-dot" style="text-shadow: 0 0 0 ${m.color}; filter: grayscale(100%) sepia(100%) saturate(500%) hue-rotate(-20deg);">💩</span>` : '';
+          if(!m) return '';
+          // 투명 그래픽 필터를 활용해 어떤 폰이든 멤버 색상으로 똥 색깔을 완벽하게 덮어씌웁니다.
+          return `<span class="heart-dot" style="display:inline-block; font-size:13px; line-height:1; filter: drop-shadow(0px 0px 0px ${m.color}) sepia(100%) saturate(10000%) hue-rotate(0deg); color: ${m.color}; mix-blend-mode: multiply;">💩</span>`;
         }).join('')}
         ${dayEvents.map(item => {
           const m = getMemberById(item.member_id);
@@ -265,13 +267,12 @@ function openDayModal(date) {
   qs('scheduleModal').classList.add('show');
 }
 
-// 🌟 [변경] 모달 창 내부의 버튼 텍스트도 똥 컨셉에 맞게 변경 완료!
 function updateHeartButtonUI(date, currentMember) {
   const hasHeart = state.availability.find(item => item.date === date && item.member_id === currentMember.id);
   const hBtn = qs('modalHeartBtn');
   if(!hBtn) return;
   hBtn.textContent = hasHeart ? "💩 나 이날 안돼! (똥 취소)" : "💩 나 이날 가능해! (똥 투표)";
-  hBtn.style.background = hasHeart ? "#a78bfa" : "#edf2ff";
+  hBtn.style.background = hasHeart ? currentMember.color : "#edf2ff";
   hBtn.style.color = hasHeart ? "#fff" : "#334155";
 }
 
