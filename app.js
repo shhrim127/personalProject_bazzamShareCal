@@ -100,7 +100,7 @@ function renderMembers() {
           <div class="member-title">
             <div class="avatar"><img src="${member.avatar_url || makeAvatar(member)}" alt="" /></div>
             <div class="field" style="margin-left:4px;">
-              <input type="text" data-name-slot="${slot}" value="${sanitize(member.name)}" placeholder="이름 변경" style="width:110px; padding:4px 6px;" />
+              <input type="text" data-name-slot="${slot}" value="${sanitize(member.name)}" placeholder="이름 변경" />
             </div>
           </div>
           <div style="display:flex; align-items:center; gap:6px;">
@@ -109,6 +109,9 @@ function renderMembers() {
               ${state.activeSlot === slot ? '선택됨' : '선택'}
             </button>
           </div>
+        </div>
+        <div class="file-upload-field">
+          <input type="file" accept="image/*" data-avatar-file-slot="${slot}" />
         </div>
       </div>`;
   }).join('');
@@ -130,13 +133,45 @@ function renderMembers() {
     input.addEventListener('click', () => { isEditingInput = true; });
     input.addEventListener('change', async () => { isEditingInput = false; await handleAutoSave(Number(input.dataset.colorSlot)); });
   });
+
+  // 🌟 파일 업로드 로직 완전 재정비 및 자동 비동기 동기화 락 제어 확실하게 수정
+  document.querySelectorAll('[data-avatar-file-slot]').forEach(input => input.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const slot = Number(input.dataset.avatarFileSlot);
+    isEditingInput = true;
+    
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const img = new Image();
+      img.onload = async () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 64; 
+        canvas.height = 64;
+        ctx.drawImage(img, 0, 0, 64, 64);
+        
+        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.6); 
+        isEditingInput = false;
+        
+        const currentMember = getMemberBySlot(slot);
+        await upsertMember(slot, currentMember.name, currentMember.color, compressedDataUrl);
+        await loadRoomState();
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  }));
 }
 
 async function handleAutoSave(slot) {
   const nameInput = document.querySelector(`[data-name-slot="${slot}"]`);
   const colorInput = document.querySelector(`[data-color-slot="${slot}"]`);
   if(!nameInput || !colorInput) return;
-  await upsertMember(slot, nameInput.value.trim() || `멤버 ${slot}`, colorInput.value, getMemberBySlot(slot).avatar_url);
+  
+  const currentAvatar = getMemberBySlot(slot).avatar_url;
+  await upsertMember(slot, nameInput.value.trim() || `멤버 ${slot}`, colorInput.value, currentAvatar);
   await loadRoomState();
 }
 
@@ -224,13 +259,17 @@ function openDayModal(date) {
   qs('scheduleTitle').value = existing?.title || '';
   qs('scheduleMemo').value = existing?.memo || '';
   
+  updateHeartButtonUI(date, currentMember);
+  qs('scheduleModal').classList.add('show');
+}
+
+function updateHeartButtonUI(date, currentMember) {
   const hasHeart = state.availability.find(item => item.date === date && item.member_id === currentMember.id);
   const hBtn = qs('modalHeartBtn');
-  hBtn.textContent = hasHeart ? "♥ 하트 취소" : "♡ 하트 누르기";
+  if(!hBtn) return;
+  hBtn.textContent = hasHeart ? "♥ 이날 가능해! (취소하려면 터치)" : "♡ 나 이날 가능해! (하트 투표)";
   hBtn.style.background = hasHeart ? "#ff6b81" : "#edf2ff";
   hBtn.style.color = hasHeart ? "#fff" : "#334155";
-
-  qs('scheduleModal').classList.add('show');
 }
 
 function closeScheduleModal() {
@@ -244,23 +283,28 @@ async function toggleHeartModal() {
     if (!member) return;
     const date = state.scheduleDate;
     const existing = state.availability.find(item => item.date === date && item.member_id === member.id);
+    
     if (existing) {
       await supabaseFetch(`${API_BASE}/availability?room_id=eq.${state.roomId}&date=eq.${date}&member_id=eq.${member.id}`, { method: 'DELETE' });
     } else {
       await supabaseFetch(`${API_BASE}/availability`, { method: 'POST', body: JSON.stringify({ room_id: state.roomId, date, member_id: member.id }) });
     }
+    
     await loadRoomState();
-    openDayModal(date);
+    updateHeartButtonUI(date, member);
   } catch (e) {}
 }
 
+// 🌟 [수정] 일정 저장하기 버튼을 누를 때만 제목 체크 알림창이 작동하도록 완벽 분리했습니다.
 async function saveSchedule() {
   try {
     const member = state.members.find(m => m.slot === state.activeSlot);
     if (!member) return;
     const title = qs('scheduleTitle').value.trim();
     const memo = qs('scheduleMemo').value.trim();
-    if(!title) { alert('일정 제목을 입력하세요.'); return; }
+    
+    // 이제 오직 바쁜 일정을 새로 추가하여 [저장하기] 버튼을 누를 때만 이 알림창이 작동합니다.
+    if(!title) { alert('바쁜 일정 제목을 입력하세요! (예: 약속, 알바 등)'); return; }
 
     const existing = state.events.find(item => item.date === state.scheduleDate && item.member_id === member.id);
     if (existing) {
