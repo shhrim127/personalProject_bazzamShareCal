@@ -70,7 +70,8 @@ async function supabaseFetch(url, options = {}) {
 
 function updateShareLinkBox() {
   if (state.roomSlug && state.roomToken) {
-    qs('shareLinkBox').textContent = `${location.origin}${location.pathname}?room=${state.roomSlug}&token=${state.roomToken}`;
+    const box = qs('shareLinkBox');
+    if(box) box.textContent = `${location.origin}${location.pathname}?room=${state.roomSlug}&token=${state.roomToken}`;
   }
 }
 
@@ -88,7 +89,10 @@ let isEditingInput = false;
 function renderMembers() {
   if (isEditingInput) return;
 
-  qs('memberGrid').innerHTML = [1, 2, 3, 4].map((slot) => {
+  const grid = qs('memberGrid');
+  if(!grid) return;
+
+  grid.innerHTML = [1, 2, 3, 4].map((slot) => {
     const member = getMemberBySlot(slot);
     return `
       <div class="member-card" style="border-left: 5px solid ${member.color}">
@@ -100,7 +104,7 @@ function renderMembers() {
             </div>
           </div>
           <div style="display:flex; align-items:center; gap:6px;">
-            <input type="color" data-color-slot="${slot}" value="${member.color}" style="width:28px; height:24px; border:none; cursor:pointer; background:none;" />
+            <input type="color" data-color-slot="${slot}" value="${member.color}" style="width:28px; height:24px; border:none; cursor:pointer; background:none; padding:0;" />
             <button class="secondary active-select" data-active-slot="${slot}" style="padding:4px 8px; font-size:11px; background:${state.activeSlot === slot ? member.color : '#edf2ff'}; color:${state.activeSlot === slot ? '#fff' : '#334155'}">
               ${state.activeSlot === slot ? '선택됨' : '선택'}
             </button>
@@ -137,8 +141,10 @@ async function handleAutoSave(slot) {
 }
 
 function renderCalendar() {
-  qs('monthTitle').textContent = monthTitle(state.currentYear, state.currentMonth);
   const calendar = qs('calendar');
+  if(!calendar) return;
+
+  qs('monthTitle').textContent = monthTitle(state.currentYear, state.currentMonth);
   calendar.innerHTML = '';
   
   ['일', '월', '화', '수', '목', '금', '토'].forEach(label => {
@@ -219,9 +225,10 @@ function openDayModal(date) {
   qs('scheduleMemo').value = existing?.memo || '';
   
   const hasHeart = state.availability.find(item => item.date === date && item.member_id === currentMember.id);
-  qs('modalHeartBtn').textContent = hasHeart ? "♥ 하트 취소" : "♡ 하트 누르기";
-  qs('modalHeartBtn').style.background = hasHeart ? "#ff6b81" : "#edf2ff";
-  qs('modalHeartBtn').style.color = hasHeart ? "#fff" : "#334155";
+  const hBtn = qs('modalHeartBtn');
+  hBtn.textContent = hasHeart ? "♥ 하트 취소" : "♡ 하트 누르기";
+  hBtn.style.background = hasHeart ? "#ff6b81" : "#edf2ff";
+  hBtn.style.color = hasHeart ? "#fff" : "#334155";
 
   qs('scheduleModal').classList.add('show');
 }
@@ -341,6 +348,7 @@ function bind() {
   });
   qs('prevMonth').addEventListener('click', () => { state.currentMonth -= 1; if (state.currentMonth < 0) { state.currentMonth = 11; state.currentYear -= 1; } renderCalendar(); });
   qs('nextMonth').addEventListener('click', () => { state.currentMonth += 1; if (state.currentMonth > 11) { state.currentMonth = 0; state.currentYear += 1; } renderCalendar(); });
+  qs('todayBtn').addEventListener('click', () => { const now = new Date(); state.currentMonth = now.getMonth(); state.currentYear = now.getFullYear(); renderCalendar(); });
   qs('closeModalBtn').addEventListener('click', closeScheduleModal);
   qs('saveScheduleBtn').addEventListener('click', saveSchedule);
   qs('deleteScheduleBtn').addEventListener('click', deleteSchedule);

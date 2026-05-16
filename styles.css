@@ -9,65 +9,64 @@
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
-body { background: var(--bg); color: var(--text); padding: 12px; max-width: 480px; margin: 0 auto; line-height: 1.4; }
+body { background: var(--bg); color: var(--text); padding: 12px; max-width: 480px; margin: 0 auto; line-height: 1.4; -webkit-tap-highlight-color: transparent; }
 
-/* 현재 공유 링크 상자 */
+/* 공유 링크 구역 */
 .header-box { background: var(--surface); padding: 12px; border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 12px; }
-.share-box { background: #f1f5f9; padding: 8px; border-radius: 8px; font-size: 11px; word-break: break-all; margin-bottom: 8px; color: var(--text-muted); }
-button { padding: 8px 14px; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 13px; }
+.share-box { background: #f1f5f9; padding: 8px; border-radius: 8px; font-size: 11px; word-break: break-all; margin-bottom: 8px; color: var(--text-muted); text-align: center; }
+button { padding: 8px 14px; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 13px; transition: opacity 0.1s; }
+button:active { opacity: 0.7; }
 button.primary { background: var(--primary); color: white; }
 button.secondary { background: #edf2ff; color: #334155; }
 
-/* 멤버 설정: 세로로 1줄씩 깔끔한 카드로 배치 */
+/* 멤버 카드 정렬 */
 .member-grid { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
-.member-card { background: var(--surface); padding: 12px; border-radius: var(--radius); border: 1px solid var(--border); display: flex; flex-direction: column; gap: 6px; }
-.member-header { display: flex; justify-content: space-between; align-items: center; }
+.member-card { background: var(--surface); padding: 10px 12px; border-radius: var(--radius); border: 1px solid var(--border); display: flex; flex-direction: column; gap: 6px; }
+.member-header { display: flex; justify-content: space-between; align-items: center; width: 100%; }
 .member-title { display: flex; align-items: center; gap: 8px; }
 .avatar { width: 32px; height: 32px; border-radius: 50%; overflow: hidden; border: 1px solid var(--border); background: #eee; }
 .avatar img { width: 100%; height: 100%; object-fit: cover; }
-.member-meta strong { font-size: 14px; }
 .field input[type="text"] { width: 100%; padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; }
 
-/* 달력 컨트롤러: 월 표시와 버튼들을 일렬로 정렬 */
-.cal-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; background: var(--surface); padding: 8px 12px; border-radius: var(--radius); border: 1px solid var(--border); }
-.cal-controls h2 { font-size: 16px; font-weight: 700; }
-.cal-btn-group { display: flex; gap: 4px; }
-.cal-btn-group button { padding: 6px 10px; font-size: 12px; }
+/* 🌟 상단 월 표시 및 이전/다음 버튼 그룹 정렬 보정 */
+.cal-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; background: var(--surface); padding: 10px 12px; border-radius: var(--radius); border: 1px solid var(--border); width: 100%; }
+.cal-controls h2 { font-size: 15px; font-weight: 700; margin: 0; }
+.cal-btn-group { display: flex; gap: 4px; align-items: center; }
+.cal-btn-group button { padding: 6px 10px; font-size: 12px; white-space: nowrap; }
 
-/* 달력 본체: 화면에 꽉 차게 고정 */
+/* 달력 격자 구조 고정 */
 .calendar { display: grid; grid-template-columns: repeat(7, 1fr); background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; width: 100%; }
 .weekday { padding: 8px 0; text-align: center; font-size: 11px; font-weight: 700; color: var(--text-muted); border-bottom: 1px solid var(--border); background: #fafafa; }
 .weekday:first-child { color: #ef4444; }
 .weekday:last-child { color: #3b82f6; }
 
-/* 날짜 칸 고정 (모바일 깨짐 방지 핵심) */
-.day { min-height: 55px; height: 55px; padding: 4px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); position: relative; cursor: pointer; display: flex; flex-direction: column; justify-content: space-between; background: var(--surface); }
+/* 날짜 칸 터치 영역 확보 */
+.day { min-height: 58px; height: 58px; padding: 6px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); position: relative; cursor: pointer; display: flex; flex-direction: column; justify-content: space-between; background: var(--surface); }
 .day:nth-child(7n+1) .date-num { color: #ef4444; }
 .day:nth-child(7n) .date-num { color: #3b82f6; }
 .day:nth-child(7n) { border-right: none; }
-.day.muted { opacity: 0.25; }
+.day.muted { opacity: 0.2; }
 .day.today { background: #f0f7ff; }
 .day.today .date-num { background: var(--primary); color: white; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; }
-.date-num { font-size: 12px; font-weight: 600; }
+.date-num { font-size: 12px; font-weight: 600; pointer-events: none; }
 
-/* 하트 및 일정 배지 정렬 */
-.indicator-row { display: flex; gap: 2px; align-items: center; flex-wrap: wrap; min-height: 12px; }
-.heart-dot { font-size: 10px; line-height: 1; }
+/* 하트, 일정 도트 배지 정렬 */
+.indicator-row { display: flex; gap: 2px; align-items: center; flex-wrap: wrap; min-height: 12px; pointer-events: none; }
+.heart-dot { font-size: 11px; line-height: 1; }
 .event-badge { width: 5px; height: 5px; border-radius: 50%; display: inline-block; }
 
-/* 모달창 (팝업): 폰 화면 정중앙에 뜨게 고정 */
-.modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.15s ease; z-index: 9999; padding: 20px; }
+/* 🌟 모달 팝업창 모바일 중앙 배치 긴급 고정 */
+.modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.15s ease; z-index: 9999; padding: 16px; }
 .modal.show { opacity: 1; pointer-events: auto; }
-.modal-content { background: var(--surface); padding: 16px; border-radius: var(--radius); width: 100%; max-width: 340px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); }
+.modal-content { background: var(--surface); padding: 16px; border-radius: var(--radius); width: 100%; max-width: 320px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
 .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
-.modal-header h3 { font-size: 15px; font-weight: 700; }
+.modal-header h3 { font-size: 14px; font-weight: 700; }
 
-/* 일정 확인창 가독성 최적화 */
-.modal-event-list { max-height: 120px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; background: #f8fafc; padding: 8px; border-radius: 10px; border: 1px solid var(--border); }
+.modal-event-list { max-height: 110px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; background: #f8fafc; padding: 8px; border-radius: 10px; border: 1px solid var(--border); }
 .modal-event-item { padding: 6px; border-radius: 6px; border-left: 3px solid var(--primary); background: #fff; font-size: 12px; }
 .modal-event-item .evt-title { font-weight: 700; color: #1e293b; }
 .modal-event-item .evt-memo { font-size: 11px; color: #64748b; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; margin-top: 2px; word-break: break-all; }
 
 .modal input, .modal textarea { width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; }
-.modal textarea { resize: none; height: 50px; }
-.modal-footer-btns { display: flex; justify-content: flex-end; gap: 6px; margin-top: 4px; }
+.modal textarea { resize: none; height: 48px; }
+.modal-footer-btns { display: flex; justify-content: flex-end; gap: 6px; }

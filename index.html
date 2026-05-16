@@ -1,105 +1,72 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>공유 링크 달력 · Supabase Starter</title>
-  <link rel="stylesheet" href="./styles.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>bazzam 공유 달력</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="container">
-    <header class="topbar">
-      <div>
-        <h1>💗 로그인 없는 공유 링크 달력</h1>
-        <p class="sub">Supabase Edge Function + Postgres 구조. 공유 링크만 있으면 4명이 같이 프로필·가능 날짜·일정을 관리할 수 있어요.</p>
-      </div>
-      <div class="badge">Starter Kit · no-auth share link</div>
-    </header>
 
-    <section class="setup-card" id="setupCard">
-      <div class="setup-grid">
-        <div>
-          <h2>방 연결</h2>
-          <p class="hint">처음이면 <b>새 공유방 만들기</b>, 이미 링크가 있으면 URL의 <code>?room=...&token=...</code> 로 자동 접속됩니다.</p>
-          <div class="actions">
-            <button id="createRoomBtn" class="primary">새 공유방 만들기</button>
-            <button id="reloadBtn" class="secondary">상태 새로고침</button>
-          </div>
-        </div>
-        <div>
-          <h2>현재 공유 링크</h2>
-          <div class="share-box" id="shareLinkBox">방을 만들면 링크가 생성됩니다.</div>
-          <div class="actions">
-            <button id="copyLinkBtn" class="secondary">링크 복사</button>
-          </div>
-        </div>
-      </div>
-      <div class="warning" id="configWarning"></div>
-    </section>
+  <div id="configWarning" class="header-box" style="display:none; color: #ef4444; font-weight: bold;"></div>
 
-    <div class="layout">
-      <aside class="panel">
-        <div class="section-title-row">
-          <h2>멤버 설정</h2>
-          <span class="mini-hint">색상 중복 불가</span>
-        </div>
-        <div id="memberGrid" class="member-grid"></div>
-      </aside>
-
-      <section class="calendar-wrap">
-        <div class="calendar-toolbar">
-          <div class="toolbar-left">
-            <button id="prevMonth" class="secondary">◀ 이전달</button>
-            <div class="month-title" id="monthTitle"></div>
-            <button id="nextMonth" class="secondary">다음달 ▶</button>
-          </div>
-          <div class="toolbar-right">
-            <button id="todayBtn" class="secondary">이번달</button>
-            <button id="activeMemberBtn" class="primary">활성 멤버</button>
-          </div>
-        </div>
-        <div id="legend" class="legend"></div>
-        <div id="calendar" class="calendar"></div>
-      </section>
+  <div class="header-box">
+    <div id="shareLinkBox" class="share-box">방을 만들면 링크가 생성됩니다.</div>
+    <div style="display: flex; gap: 8px; justify-content: center;">
+      <button id="createRoomBtn" class="primary">새 공유방 만들기</button>
+      <button id="copyLinkBtn" class="secondary">링크 복사</button>
     </div>
   </div>
 
-  <div class="modal-backdrop" id="scheduleModal">
-    <div class="modal">
-      <h3>일정 입력</h3>
-      <div class="grid two">
-        <div class="field">
-          <label>날짜</label>
-          <input type="text" id="scheduleDate" disabled />
-        </div>
-        <div class="field">
-          <label>작성 슬롯</label>
-          <input type="text" id="scheduleSlot" disabled />
-        </div>
+  <div id="memberGrid" class="member-grid"></div>
+
+  <div class="cal-controls">
+    <h2 id="monthTitle">2026년 5월</h2>
+    <div class="cal-btn-group">
+      <button id="prevMonth" class="secondary">◀ 이전</button>
+      <button id="todayBtn" class="secondary">오늘</button>
+      <button id="nextMonth" class="secondary">다음 ▶</button>
+    </div>
+  </div>
+
+  <div style="margin-bottom: 8px;">
+    <button id="activeMemberBtn" style="width:100%; color:white; pointer-events:none;">나: 멤버 1</button>
+  </div>
+
+  <div id="calendar" class="calendar"></div>
+
+
+  <div id="scheduleModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modalDateTitle">일정 상세</h3>
+        <button id="closeModalBtn" style="background:none; font-size:20px; padding:0; cursor:pointer; color:#64748b;">&times;</button>
       </div>
-      <div class="field">
-        <label>일정 제목</label>
-        <input type="text" id="scheduleTitle" placeholder="예: 저녁 약속" />
+      
+      <div id="modalEventList" class="modal-event-list"></div>
+      
+      <button id="modalHeartBtn" style="width:100%; font-weight:700;">♡ 하트 누르기</button>
+      
+      <hr style="border:none; border-top:1px solid #e2e8f0; margin:4px 0;">
+      
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <input type="text" id="scheduleTitle" placeholder="일정 제목 입력 (예: 약속)" maxlength="50">
+        <textarea id="scheduleMemo" placeholder="상세 메모 입력 (선택사항)" maxlength="200"></textarea>
       </div>
-      <div class="field">
-        <label>메모</label>
-        <textarea id="scheduleMemo" rows="4" placeholder="상세 내용을 입력하세요"></textarea>
-      </div>
-      <div class="actions">
-        <button id="saveScheduleBtn" class="primary">일정 저장</button>
-        <button id="deleteScheduleBtn" class="secondary">내 일정 삭제</button>
-        <button id="closeModalBtn" class="ghost">닫기</button>
+      
+      <div class="modal-footer-btns">
+        <button id="deleteScheduleBtn" style="background:#fee2e2; color:#ef4444;">삭제</button>
+        <button id="saveScheduleBtn" class="primary">저장하기</button>
       </div>
     </div>
   </div>
 
   <script>
     window.APP_CONFIG = {
-      SUPABASE_URL: "https://xqtjfbobcwuowjrcybxo.supabase.co",
-      SUPABASE_ANON_KEY: "sb_publishable_d5Q0nRYspmvGsGue-j52oQ_rDYGMvjP",
-      FUNCTION_NAME: "calendar-api"
+      SUPABASE_URL: "https://xqtjfbobcwuowjrcybxo.supabase.co", 
+      SUPABASE_ANON_KEY: "sb_publishable_d5Q0nRYspmvGsGue-j52oQ_rDYGMvjP"
     };
   </script>
-  <script src="./app.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
