@@ -217,19 +217,19 @@ function renderCalendar() {
     const cell = document.createElement('div');
     cell.className = `day ${muted ? 'muted' : ''} ${isToday ? 'today' : ''}`;
     
-    // 🌟 [핵심 변경] 각 멤버의 고유 색상 코드를 추출해 💩 이모지를 강제 채색(염색)합니다!
+    // 🌟 [안전하고 확실한 똥 표현으로 변경]
+    // 이모지 뒤에 원형 배경(background)을 깔아서 멤버들의 고유 색상을 오류 없이 완벽하게 표현합니다!
     cell.innerHTML = `
       <div class="date-num">${day}</div>
-      <div class="indicator-row">
+      <div class="indicator-row" style="display:flex; flex-wrap:wrap; gap:3px;">
         ${dayAvailability.map(item => {
           const m = getMemberById(item.member_id);
           if(!m) return '';
-          // 투명 그래픽 필터를 활용해 어떤 폰이든 멤버 색상으로 똥 색깔을 완벽하게 덮어씌웁니다.
-          return `<span class="heart-dot" style="display:inline-block; font-size:13px; line-height:1; filter: drop-shadow(0px 0px 0px ${m.color}) sepia(100%) saturate(10000%) hue-rotate(0deg); color: ${m.color}; mix-blend-mode: multiply;">💩</span>`;
+          return `<span class="heart-dot" style="display:inline-flex; align-items:center; justify-content:center; width:16px; height:16px; border-radius:50%; background:${m.color}; font-size:10px; line-height:1; box-shadow:0 1px 2px rgba(0,0,0,0.15);">💩</span>`;
         }).join('')}
         ${dayEvents.map(item => {
           const m = getMemberById(item.member_id);
-          return m ? `<span class="event-badge" style="background:${m.color}"></span>` : '';
+          return m ? `<span class="event-badge" style="background:${m.color}; width:6px; height:6px; border-radius:50%;"></span>` : '';
         }).join('')}
       </div>`;
       
@@ -251,9 +251,9 @@ function openDayModal(date) {
     listEl.innerHTML = dayEvents.map(item => {
       const m = getMemberById(item.member_id);
       return `
-        <div class="modal-event-item" style="border-left-color: ${m?.color || '#cbd5e1'}">
+        <div class="modal-event-item" style="border-left: 4px solid ${m?.color || '#cbd5e1'}; padding-left:8px; margin-bottom:6px;">
           <div class="evt-title"><strong>${sanitize(m?.name || '멤버')}</strong>: ${sanitize(item.title || '(제목 없음)')}</div>
-          ${item.memo ? `<div class="evt-memo">${sanitize(item.memo)}</div>` : ''}
+          ${item.memo ? `<div class="evt-memo" style="font-size:11px; color:#64748b;">${sanitize(item.memo)}</div>` : ''}
         </div>`;
     }).join('');
   }
